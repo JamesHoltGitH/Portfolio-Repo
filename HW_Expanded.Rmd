@@ -1,0 +1,117 @@
+---
+title: "HW expansion"
+output: html_document
+date: "2025-01-27"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Exploring HW problems more.
+
+**Problem #1 (4 pts)**\
+Why do we need to conduct F -test for model significance (↔︎ at least one predictor is important)? Why\
+can’t we just look at t-test results for each predictor individually, and see if at least one was significant?The following simulation should elucidate this issue.
+
+-   **individual t-test only shows the significance of the predictors independently from each other which is a loss of some information, individual predictors can be insignificant alone but significant when weighed for significance with other predictors. the f-test is an evaluation for the model as a whole for significance.**
+
+\
+1. Proceed to:\
+a. Simulate vectors x1, x2, . . . , x100 of predictors, where xj = (xj,1, xj,2, . . . , xj,200), with each xj,i ∼ U nif (−50, 50).\
+b. Simulate a vector y = (y1, y2, . . . , y200) of responses, with each yi ∼ U nif (−50, 50).\
+c. Plot your response vector y against a couple of predictor vectors (e.g. against x1, x2).\
+As you may see, the way we generated the data, response vector y is completely unrelated to any of\
+the predictor vectors x1, x2, . . . , xn (otherwise, we would’ve simulated vector y as a function of some\
+predictors, e.g. y = 3 + 2x3 − 5x7 + ε). Hence, we know for a fact that the following model:\
+y ∼ x1 + x2 + · · · + x100\
+is not statistically significant, because y is not related to any of the xj ’s.
+
+```{r}
+set.seed(1)  # For reproducibility
+predictors <- replicate(100, runif(200, -50, 50))
+y <- runif(200, -50, 50)
+plot(predictors[,1], y, main="y vs x1", xlab="x1", ylab="y")
+plot(predictors[,2], y, main="y vs x2", xlab="x2", ylab="y")
+lm.obj <- lm(y ~ predictors)
+summary(lm.obj)
+
+```
+
+2\. Nonetheless, proceed to run that model, and\
+**a.** Formulate the hypotheses for the F -test of model significance. Report & interpret the results of\
+**F -test.\
+**H**0​: None of the predictors** xj**​ are significant;** β**1​=**β**2​=⋯=**β**100​=0.\
+**Ha**: At least one** βj **not ​= 0.**
+
+**F-stat 0.762, p-val 0.912 indicating we fail to reject the null hypothesis, overall model is not significant statistically and predictors fail to explain the variabce in y.\
+**\
+**b.** Report the \# of significant p-values you’ve got from t-tests for individual predictors.\
+**(predictors16, predictors18, predictors55, and predictors67) have significance at p-values to 0.05 level**\
+**c.** In part (b), would you consider those effects to be of true importance, or happening just due to\
+chance? Explain.\
+**given the small amount significant p=vals compared to the predictors (100) the significance may be by chance as opposed to legitimate significance to the model\
+d.** If those results happened just due to chance (which they did), what type of error are we committing\
+when rejecting H0 hypothesis in those cases?\
+**this is most likely type 1 error, incorrectly concluding effect, when predictors are not significant?**
+
+**Problem #2 (3 pts)**\
+This problem will deal with cystf ibr data example of ISwR package. In particular, we will be building a\
+model to predict pemax (patient’s maximum respiratory pressure) based on other physical characteristics.\
+1. Proceed to fit the following multiple linear regression model:\
+pemax ∼ .\
+a. Comment on the 1) overall model significance; 2) significance of any individual predictors. Why\
+do you think this is happening (name the main issue)?
+
+-   **original model: f-stat 2.929, p-val 0.032 shows marginal significance to the 5% lvl, possibly inflated by multi-collinearity**
+
+-   **doesn’t seem like any predictors are individually significant, seems p-vals are mostly \>0.05**
+
+-   **other predictors are collinear**
+
+\
+b. Proceed to address the issue observed in part (a) via studying a correlation matrix of predictors, modifying the model accordingly.\
+Fit the modified model, comment on its 1) overall model significance; 2) significance of any individual predictors.
+
+-   **selected predictors are weight, bpm, fev1, rv. compensating for collinearity**
+
+-   **The modified model has an F-statistic of 7.957 with a p-value of 0.000523, shows more significance.**
+
+```{r}
+library(ISwR)
+data("cystfibr")
+model <- lm(pemax ~ ., data = cystfibr)
+summary(model)
+
+cor(cystfibr[, sapply(cystfibr, is.numeric)])
+model_modified <- lm(pemax ~ weight + bmp + fev1 + rv, data = cystfibr)
+summary(model_modified)
+```
+
+**Summary**
+
+-   **f-test / t-test for model significance.\
+    we went over this in class talking about the cystfibr data set if i remember correctly, looking into the difference in the individual significance and the variables that are significant in pairs or more as a significant model**
+
+-   **false positives in type 1 error.\
+    we discussed this in class, mistakenly rejecting the null hypothesis when it is actually true to the case. none of the predictors significantly explain the response, any observed relationship is by random chance, like the example in the slides we see this is the case in the information from the simulated sample.**
+
+-   **executing testing and interpretation.**
+
+    **this is practice of the content from the last few lectures, some of the plotting i had to look up and go back to double check because i couldnt remember how it worked and was getting errors. following the model building and the use of the values to determine the significance of the model or if there is co-linearity.**
+
+Professor comments:
+
+Problem #1
+
+Part 2: -0.4
+
+\* "given the small amount significant p=vals compared to the predictors (100) the significance may be by chance as opposed to legitimate significance to the model" - that's not the reason why. Those are by chance because you know for a fact that they were generated to have no relationship with the response variable.
+
+\* How many such Type 1 errors you would typically expect out of 100 tests?
+
+\* "when predictors are not significant?" - you're conflating statistical significance of a hypothesis test with an actual true effect. The word "significant" should only apply to the results of the test, so what you were trying to say here in the end was probable "when predictors have no actual true effect on the response" (which we know due to having generated the data that way)
+
+Problem #2
+
+-0.5: Unclear how you ended up just narrowing the model down to 4 predictors, and I don't see a discussion of individual t-tests in the final model. That wasn't the process we discussed in class. See solutions.
