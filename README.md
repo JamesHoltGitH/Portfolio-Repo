@@ -26,4 +26,4 @@
 # Connect with Me
 ####📧 Email: Jimholt2002@gmail.com
 #### Phone number: +1(413)-440-9142
-####📂 LinkedIn Link coming soon
+####📂 LinkedIn https://www.linkedin.com/in/james-holt-5bb42a304/ 
