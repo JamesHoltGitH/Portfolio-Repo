@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
--   This is an expanded exploration of a homework assignment by professor A.Skripnikov of New College of Florida
+-   This is an expanded exploration of a homework assignment by professor [A.Skripnikov]{.underline} of New College of Florida
 
 ## Introduction
 
