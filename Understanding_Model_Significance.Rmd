@@ -1,0 +1,109 @@
+---
+title: "Understanding Model Significance: Why F-Tests Matter in Regression"
+author: "James Holt"
+date: "2025-01-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+-   This is an expanded exploration of a homework assignment by professor A.Skripnikov of New College of Florida
+
+## Introduction
+
+When building regression models, one of the key challenges is determining whether our predictors genuinely explain the variation in the response variable. While individual t-tests assess the significance of each predictor separately, they don’t capture the model’s overall explanatory power. This is where the **F-test for model significance** comes in.
+
+In this post, we explore why F-tests are necessary, using simulations and real-world data. We also examine the risks of false positives and how collinearity affects model interpretation.
+
+------------------------------------------------------------------------
+
+## Why Can’t We Rely on t-Tests Alone?
+
+A common misconception is that if at least one predictor has a low p-value in a t-test, our model must be significant. However, this ignores how predictors interact. The F-test evaluates whether the model as a whole is statistically meaningful.
+
+To demonstrate this, let's simulate a dataset where the response variable **y** is completely unrelated to 100 predictor variables.
+
+```{r}
+set.seed(1)  # Ensuring reproducibility
+predictors <- replicate(100, runif(200, -50, 50))  # 100 predictors
+y <- runif(200, -50, 50)  # Response variable with no real relationship
+
+# Visualizing response against two predictors
+plot(predictors[,1], y, main="y vs x1", xlab="x1", ylab="y")
+plot(predictors[,2], y, main="y vs x2", xlab="x2", ylab="y")
+```
+
+Since we generated **y** randomly, we know that we should be able to assume that the true relationship should be non-existent. However, let's fit a multiple linear regression model and examine its significance.
+
+```{r}
+lm.obj <- lm(y ~ predictors)
+summary(lm.obj)
+```
+
+### Interpreting the Results
+
+-   The **F-statistic = 0.762**, with a **p-value = 0.912**, meaning we fail to reject the null hypothesis. This confirms that the model, as a whole, is not statistically significant.
+-   However, when looking at individual predictors, we might see some with p-values below 0.05 (e.g., x16, x18, x55, x67). Knowing what we do about this simulated data ,should we trust these findings?
+
+### The Danger of False Positives
+
+With the 100 predictors, we expect some to have small p-values by **pure chance**. This appears to be a classic case of **Type I error**, incorrectly rejecting the null hypothesis when it is known in this case to be true. Given a 5% significance level, we'd expect about **5 false positives** among these 100 predictors, even if they have no actual effect which is the key takeaway.
+
+------------------------------------------------------------------------
+
+## Addressing Collinearity in Real Data
+
+Now, I want to apply this understanding to a real data set from a R library, opposed to my small simulated data set: **cystfibr** from the `ISwR` package, which contains medical data on cystic fibrosis patients. Our goal is to predict **pemax** (maximum respiratory pressure) using other physical characteristics.
+
+```{r}
+library(ISwR)
+data("cystfibr")
+
+# Fitting the full model
+model <- lm(pemax ~ ., data = cystfibr)
+summary(model)
+```
+
+### Issues in the Initial Model
+
+-   The **p-value = 0.032**, suggesting marginal significance.
+-   However, **no individual predictors appear significant**, with p-values mostly above 0.05.
+-   This indicates possible **multicollinearity**, where predictors share strong correlations and distort significance tests.
+
+#### Investigating Correlations
+
+```{r}
+cor_matrix <- cor(cystfibr[, sapply(cystfibr, is.numeric)])
+round(cor_matrix, 2)  # Displaying rounded correlation matrix
+```
+
+There appears to be several predictors in this data set exhibit high correlations. To address this, we refine our model by removing redundant predictors (predictors that are explaining the same or too similar of a portion of the data stets information) and keeping only **weight, bpm, fev1, and rv**.
+
+```{r}
+model_modified <- lm(pemax ~ weight + bmp + fev1 + rv, data = cystfibr)
+summary(model_modified)
+```
+
+### Improved Model Interpretation
+
+-   The new **F-statistic = 7.957, p-value = 0.000523**, indicating much stronger model significance in this refined model.
+-   A much greater portion of the predictors now show statistical significance individually, suggesting better explanatory power of this new refined model.
+
+------------------------------------------------------------------------
+
+## Key Takeaways
+
+-   The **F-test evaluates the overall significance** of a model, while individual t-tests is focused and assessing the single predictors.
+-   When many predictors are tested, **false positives** are expected due to Type I error (roughly 5% at this significance level).
+-   **Collinearity can obscure the possible true significance**, so examining correlation matrices helps refine models.
+-   Refining a model by removing redundant predictors often improves its interpretability and statistical power.
+
+Understanding and practicing use of these concepts is important when conducting regression analysis in data science and statistics. By applying these techniques, we can build more reliable descriptive models and avoid common pitfalls in statistical inference.
+
+------------------------------------------------------------------------
+
+**What’s Next?** If you found this useful, consider experimenting with your own data sets.
+
+Try simulating predictors with real relationships and see how the F-test and t-tests behave. Happy coding! 🚀
